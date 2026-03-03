@@ -1,0 +1,295 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+html{
+    scroll-behavior: smooth;
+}
+
+/* Dashboard specific styles (scoped) */
+.dashboard-content {
+    color: #1E3A8A;
+}
+.dashboard-content h1, .dashboard-content h2, .dashboard-content h3, .dashboard-content h4, .dashboard-content h5, .dashboard-content h6 {
+    color: #1E3A8A;
+}
+.dashboard-content input, .dashboard-content textarea, .dashboard-content select, .dashboard-content option, .dashboard-content button {
+    color: #1E3A8A !important;
+    caret-color: #1E3A8A !important;
+}
+
+/* Sidebar (admin) styles: Blue theme with white text */
+.dashboard-sidebar {
+    color: #FFFFFF;
+}
+.dashboard-sidebar a,
+.dashboard-sidebar button,
+.dashboard-sidebar div {
+    color: #FFFFFF !important;
+    font-size: 1rem;
+    font-weight: 600;
+}
+.dashboard-sidebar a {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+.dashboard-sidebar a:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Stronger input styles inside dashboard */
+.dashboard-content input,
+.dashboard-content textarea,
+.dashboard-content select {
+    color: #1E3A8A !important;
+    font-size: 0.95rem;
+}
+.dashboard-content input::placeholder,
+.dashboard-content textarea::placeholder {
+    color: #64748B !important;
+    opacity: 1;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #64748B;
+    opacity: 1;
+}
+
+/* Make select options readable (scoped) */
+.dashboard-content select option {
+    color: #1E3A8A !important;
+}
+
+body{
+    font-family: "Poppins", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    @apply bg-blue-50 text-neutral-700 scroll-smooth
+}
+
+.scrollbar-none::-webkit-scrollbar{
+    display: none;
+}
+
+.scrollbarCustom::-webkit-scrollbar{
+    width: 10px;
+    @apply bg-blue-50
+}
+.scrollbarCustom::-webkit-scrollbar-thumb{
+    @apply bg-blue-200 rounded-full
+}
+
+/* Dashboard form control enhancements */
+.dashboard-content .form-control,
+.dashboard-content input,
+.dashboard-content textarea,
+.dashboard-content select {
+    background-color: #FFFFFF !important;
+    border: 1px solid #BFDBFE !important;
+    padding: 0.5rem 0.75rem !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 1px 3px rgba(30, 64, 175, 0.08) !important;
+    color: #1E3A8A !important;
+    font-size: 1rem !important;
+    line-height: 1.25 !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.dashboard-content input::placeholder,
+.dashboard-content textarea::placeholder,
+.dashboard-content select::placeholder {
+    color: #64748B !important;
+    opacity: 1 !important;
+}
+.dashboard-content input:focus,
+.dashboard-content textarea:focus,
+.dashboard-content select:focus {
+    outline: none !important;
+    border-color: #2563EB !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+}
+
+/* Sidebar items styling */
+.dashboard-sidebar a,
+.dashboard-sidebar button,
+.dashboard-sidebar div {
+    font-size: 1.05rem !important;
+    font-weight: 600 !important;
+    padding: 0.6rem 0.75rem !important;
+}
+
+/* Buttons, pagination and icon colors for admin pages */
+.dashboard-content button,
+.dashboard-content .btn,
+.dashboard-content .page-link,
+.dashboard-content .pagination a,
+.dashboard-content .pagination button,
+.dashboard-content .react-paginate a,
+.dashboard-content .react-paginate li a {
+    color: #1E3A8A !important;
+    background-color: #EFF6FF !important;
+    border: 1px solid #BFDBFE !important;
+    padding: 0.45rem 0.7rem !important;
+    border-radius: 0.5rem !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease;
+}
+
+.dashboard-content button:hover,
+.dashboard-content .btn:hover,
+.dashboard-content .page-link:hover,
+.dashboard-content .pagination a:hover,
+.dashboard-content .react-paginate li a:hover {
+    background-color: #DBEAFE !important;
+    border-color: #2563EB !important;
+}
+
+/* Primary action buttons (submit/save) - Blue */
+.dashboard-content .btn-primary,
+.dashboard-content button[type="submit"] {
+    background-color: #2563EB !important;
+    color: #FFFFFF !important;
+    border-color: transparent !important;
+}
+.dashboard-content .btn-primary:hover,
+.dashboard-content button[type="submit"]:hover {
+    background-color: #1D4ED8 !important;
+}
+
+/* Orange accent buttons */
+.dashboard-content .btn-accent,
+.dashboard-content button.bg-orange-500,
+.dashboard-content .bg-orange-500 {
+    background-color: #F97316 !important;
+    color: #FFFFFF !important;
+    border-color: transparent !important;
+}
+.dashboard-content .btn-accent:hover,
+.dashboard-content button.bg-orange-500:hover,
+.dashboard-content .bg-orange-500:hover {
+    background-color: #EA580C !important;
+}
+
+/* Success buttons - Green */
+.dashboard-content .btn-success,
+.dashboard-content button.bg-green-500,
+.dashboard-content .bg-green-500 {
+    background-color: #10B981 !important;
+    color: #FFFFFF !important;
+    border-color: transparent !important;
+}
+.dashboard-content .btn-success:hover,
+.dashboard-content button.bg-green-500:hover,
+.dashboard-content .bg-green-500:hover {
+    background-color: #059669 !important;
+}
+
+/* Danger/Delete buttons - Red */
+.dashboard-content .btn-danger,
+.dashboard-content button.bg-red-500,
+.dashboard-content .bg-red-500 {
+    background-color: #EF4444 !important;
+    color: #FFFFFF !important;
+    border-color: transparent !important;
+}
+.dashboard-content .btn-danger:hover,
+.dashboard-content button.bg-red-500:hover,
+.dashboard-content .bg-red-500:hover {
+    background-color: #DC2626 !important;
+}
+
+/* Blue submit button styling */
+.dashboard-content .bg-blue-600 {
+    background-color: #2563EB !important;
+}
+.dashboard-content .bg-blue-700:hover {
+    background-color: #1D4ED8 !important;
+}
+
+/* Ensure SVG/icons inside buttons inherit text color */
+.dashboard-content button svg,
+.dashboard-content .btn svg,
+.dashboard-content .react-paginate svg {
+    fill: currentColor !important;
+    stroke: currentColor !important;
+}
+
+/* Make pagination labels clearly visible */
+.dashboard-content .pagination .page-item .page-link,
+.dashboard-content .react-paginate li a {
+    background: transparent !important;
+    color: #1E3A8A !important;
+    border: none !important;
+    padding: 0.4rem 0.6rem !important;
+}
+
+.dashboard-content .pagination .page-item.active .page-link,
+.dashboard-content .react-paginate li.active a {
+    background-color: #2563EB !important;
+    color: #FFFFFF !important;
+}
+
+/* Tighter inputs for upload page placeholders specifically */
+.dashboard-content .upload-product input::placeholder,
+.dashboard-content .upload-product textarea::placeholder {
+    color: #64748B !important;
+    opacity: 1 !important;
+}
+
+/* Card styling for admin panels */
+.dashboard-content .card,
+.dashboard-content .bg-white {
+    background-color: #FFFFFF !important;
+    border: 1px solid #BFDBFE;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(30, 64, 175, 0.08);
+}
+
+/* Table styling */
+.dashboard-content table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.dashboard-content table thead th {
+    background-color: #1E40AF !important;
+    color: #FFFFFF !important;
+    border-bottom: 2px solid #1E3A8A;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.dashboard-content table tbody tr:hover {
+    background-color: #EFF6FF !important;
+}
+
+.dashboard-content table td {
+    border-bottom: 1px solid #BFDBFE;
+}
+
+/* Modal styling */
+.dashboard-content .modal,
+.dashboard-content .fixed {
+    background-color: rgba(30, 58, 138, 0.5);
+}
+
+/* Badge styling */
+.dashboard-content .badge,
+.dashboard-content .px-2.py-1.rounded {
+    background-color: #EFF6FF;
+    color: #1E40AF;
+    border: 1px solid #BFDBFE;
+}
+
+/* Active state for sidebar */
+.dashboard-sidebar a.active,
+.dashboard-sidebar a.router-link-active {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-left: 3px solid #F97316;
+}
