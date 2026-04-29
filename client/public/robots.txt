@@ -1,0 +1,19 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://solevibe.com/sitemap.xml
+
+# Disallow admin and private pages
+Disallow: /admin/
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /checkout
+Disallow: /profile
+Disallow: /orders
+Disallow: /address
+
+# Crawl-delay (optional, for polite crawling)
+Crawl-delay: 1
+

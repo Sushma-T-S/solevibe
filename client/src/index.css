@@ -4,9 +4,10 @@
 @tailwind components;
 @tailwind utilities;
 
-
 html{
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Dashboard specific styles (scoped) */
@@ -67,13 +68,33 @@ input::placeholder, textarea::placeholder {
 
 body{
     font-family: "Poppins", sans-serif;
-    font-weight: 400;
+    font-weight: 500;
     font-style: normal;
+    font-size: 1.1rem;
     @apply bg-blue-50 text-neutral-700 scroll-smooth
 }
 
+*[id*="DashboardCart"] h1, *[id*="DashboardCart"] h3, *[class*="DashboardCart"] h1, *[class*="DashboardCart"] h3,
+.DashboardCart span, .DashboardCart p {
+  font-size: 4rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+}
+*[id*="DashboardCart"], *[class*="DashboardCart"] {
+  padding-left: 0.5rem !important;
+}
+
+
+
+
+/* Scrollbar styling */
 .scrollbar-none::-webkit-scrollbar{
     display: none;
+}
+
+.scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 .scrollbarCustom::-webkit-scrollbar{
@@ -82,6 +103,27 @@ body{
 }
 .scrollbarCustom::-webkit-scrollbar-thumb{
     @apply bg-blue-200 rounded-full
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+    outline: 2px solid #2563EB;
+    outline-offset: 2px;
+}
+
+/* Button focus styles */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid #2563EB;
+    outline-offset: 2px;
+}
+
+/* Link styles with focus */
+a {
+    transition: color 0.2s ease, background-color 0.2s ease;
 }
 
 /* Dashboard form control enhancements */
@@ -293,3 +335,31 @@ body{
     background-color: rgba(255, 255, 255, 0.2) !important;
     border-left: 3px solid #F97316;
 }
+
+/* Skip link for accessibility */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #2563EB;
+    color: white;
+    padding: 8px;
+    z-index: 100;
+    transition: top 0.3s;
+}
+
+.skip-link:focus {
+    top: 0;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+

@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
 
 const addressSchema = new mongoose.Schema({
+    name : {
+        type : String,
+        required : true
+    },
     address_line : {
         type : String,
         default : ""

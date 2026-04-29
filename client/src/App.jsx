@@ -1,120 +1,118 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import './App.css'
-import Header from './components/Header'
-import Footer from './components/Footer'
-import toast, { Toaster } from 'react-hot-toast';
-import { useEffect } from 'react';
-import fetchUserDetails from './utils/fetchUserDetails';
-import { setUserDetails } from './store/userSlice';
-import { setAllCategory,setAllSubCategory,setLoadingCategory } from './store/productSlice';
-import { useDispatch, useSelector } from 'react-redux';
-import Axios from './utils/Axios';
-import SummaryApi from './common/SummaryApi';
-import { handleAddItemCart } from './store/cartProduct'
-import GlobalProvider from './provider/GlobalProvider';
-import { FaCartShopping } from "react-icons/fa6";
-import CartMobileLink from './components/CartMobile';
-import isAdmin from './utils/isAdmin'
+import { Outlet, useLocation } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useCallback, memo } from 'react'
+import { useDispatch } from 'react-redux'
+import { logout } from './store/userSlice'
+import toast, { Toaster } from 'react-hot-toast'
+import Axios from './utils/Axios'
+import SummaryApi from './common/SummaryApi'
+import { setUserDetails } from './store/userSlice'
+import { globalApi } from './services/api'
+import { useGetCategoriesQuery, useGetSubCategoriesQuery } from './services/api'
+import { setAllCategory, setAllSubCategory } from './store/productSlice'
+import fetchUserDetails from './utils/fetchUserDetails'
+import GlobalProvider from './provider/GlobalProvider_fixed'
+
+
+
+// Lazy load heavy components
+const Header = lazy(() => import('./components/Header'))
+const Footer = lazy(() => import('./components/Footer'))
+const CartMobileLink = lazy(() => import('./components/CartMobile'))
+
+// Loading fallback
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+  </div>
+)
 
 function App() {
   const dispatch = useDispatch()
   const location = useLocation()
-  const navigate = useNavigate()
-  const user = useSelector((state)=>state.user)
   
+  const { data: categoriesData } = useGetCategoriesQuery()
+  const { data: subCategoriesData } = useGetSubCategoriesQuery()
 
-  const fetchUser = async()=>{
-      // No need to check localStorage - cookies are automatically sent
-      // Try to fetch user details - if not authenticated, API will return 401
-      try {
-          const userData = await fetchUserDetails()
-          if(userData && userData.data){
-              dispatch(setUserDetails(userData.data))
-          }
-      } catch (error) {
-          // User is not authenticated - cookies may be expired or invalid
-          console.log("User not authenticated")
+
+  // Memoize fetch functions to prevent recreation on each render
+  const fetchUser = useCallback(async () => {
+    try {
+      const userData = await fetchUserDetails()
+      if (userData && userData.data && userData.data._id) {
+        dispatch(setUserDetails(userData.data))
       }
-  }
-
-  const fetchCategory = async()=>{
-    try {
-        dispatch(setLoadingCategory(true))
-        const response = await Axios({
-            ...SummaryApi.getCategory
-        })
-        const { data : responseData } = response
-
-        if(responseData.success){
-           dispatch(setAllCategory(responseData.data.sort((a, b) => a.name.localeCompare(b.name)))) 
-        }
     } catch (error) {
-        console.error("Error fetching categories:", error)
-    }finally{
-      dispatch(setLoadingCategory(false))
+      // User not authenticated - cookies may be expired or invalid
+      console.log("User not authenticated")
+      dispatch(logout())
     }
-  }
+  }, [dispatch])
 
-  const fetchSubCategory = async()=>{
-    try {
-        const response = await Axios({
-            ...SummaryApi.getSubCategory
-        })
-        const { data : responseData } = response
 
-        if(responseData.success){
-           dispatch(setAllSubCategory(responseData.data.sort((a, b) => a.name.localeCompare(b.name)))) 
-        }
-    } catch (error) {
-        
-    }finally{
-    }
-  }
 
-  
-
-  useEffect(()=>{
+// User auth 
+  useEffect(() => {
     fetchUser()
-    fetchCategory()
-    fetchSubCategory()
-    // fetchCartItem()
-  },[])
+  }, [fetchUser])
 
-  // Role-based routing guard (Production)
-  useEffect(()=>{
-    const role = user?.role
-    const path = location.pathname
-    const isAdminPath = path.startsWith("/admin")
-    const isAuthPath = ["/login","/register","/forgot-password","/verification-otp","/reset-password"].some((p)=> path.startsWith(p))
-
-    // If ADMIN is logged in, keep them inside /admin only
-    if(isAdmin(role) && !isAdminPath && !isAuthPath){
-      navigate("/admin", { replace: true })
+  // Populate product slice from RTK cache
+  useEffect(() => {
+    if (categoriesData) {
+      dispatch(setAllCategory(categoriesData))
     }
+  }, [categoriesData, dispatch])
 
-    // If normal USER is logged in and tries admin URLs, send back to site
-    if(role && !isAdmin(role) && isAdminPath){
-      navigate("/", { replace: true })
+  useEffect(() => {
+    if (subCategoriesData) {
+      dispatch(setAllSubCategory(subCategoriesData))
     }
-  },[user?.role, location.pathname])
+  }, [subCategoriesData, dispatch])
 
-  const isAdminRoute = location.pathname.startsWith('/admin')
+
+  // Check if we're on checkout page
+  const isCheckoutPage = location.pathname === '/checkout'
 
   return (
-    <GlobalProvider> 
-      {!isAdminRoute && <Header/>}
-      <main className='min-h-[78vh]'>
-          <Outlet/>
-      </main>
-      {!isAdminRoute && <Footer/>}
-      <Toaster/>
-      {
-        !isAdminRoute && location.pathname !== '/checkout' && (
-          <CartMobileLink/>
-        )
-      }
+    <GlobalProvider>
+      <Suspense fallback={<PageLoader />}>
+        <Header />
+        <main className="min-h-[78vh] bg-white">
+          <Outlet />
+        </main>
+        <Footer />
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
+            style: {
+              background: '#333',
+              color: '#fff',
+            },
+            success: {
+              duration: 2000,
+              iconTheme: {
+                primary: '#10b981',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
+        {!isCheckoutPage && (
+          <Suspense fallback={null}>
+            <CartMobileLink />
+          </Suspense>
+        )}
+      </Suspense>
     </GlobalProvider>
   )
 }
 
-export default App
+export default memo(App)
+

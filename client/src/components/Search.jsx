@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { IoSearch } from "react-icons/io5";
+import { FaMagnifyingGlass } from "react-icons/fa6";
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { TypeAnimation } from 'react-type-animation';
 import { FaArrowLeft } from "react-icons/fa";
@@ -40,7 +40,7 @@ const Search = () => {
                     </Link>
                 ) :(
                     <button className='flex justify-center items-center h-full p-3 group-focus-within:text-primary-200'>
-                        <IoSearch size={22}/>
+<FaMagnifyingGlass size={22}/>
                     </button>
                 )
             }

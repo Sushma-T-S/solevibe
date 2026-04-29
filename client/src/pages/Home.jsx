@@ -1,94 +1,100 @@
-import React from 'react'
-import banner from '../assets/banner.png'
-import bannerMobile from '../assets/banner-mobile.jpg'
-import { useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
-import CategoryWiseProductDisplay from '../components/CategoryWiseProductDisplay'
+import React, { memo, Suspense, useMemo, useEffect } from 'react';
+import { useGetCategoriesQuery } from '../services/api';
+import { fetchSubCategories } from '../store/productSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import CategoryWiseProductDisplay from '../components/CategoryWiseProductDisplay';
+import bannerDesktop from '../assets/banner.png';
+
+const bannerDesktopUrl = '/assets/banner.png';
+// Banner imported
+
+// Lazy load banner images
+const Banner = memo(({ src, alt, className, isMobile }) => (
+  <img
+    src={src}
+    alt={alt}
+    className={className}
+    loading={isMobile ? 'eager' : 'lazy'}
+    decoding="async"
+    width={isMobile ? '600' : '1600'}
+    height={isMobile ? '300' : '400'}
+    fetchpriority={isMobile ? 'high' : 'low'}
+  />
+));
+
+const LoadingFallback = () => (
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4">
+    {[...Array(4)].map((_, i) => (
+      <div key={i} className="animate-pulse bg-gray-200 h-80 rounded-sm"></div>
+    ))}
+  </div>
+); 
 
 const Home = () => {
-  const loadingCategory = useSelector(state => state.product.loadingCategory)
-  const categoryData = useSelector(state => state.product.allCategory)
-  const navigate = useNavigate()
+  const dispatch = useDispatch()
+  const { data: categories = [], isLoading } = useGetCategoriesQuery();
+  const loadingSubCategory = useSelector(state => state.product.loadingSubCategory)
+  const allSubCategory = useSelector(state => state.product.allSubCategory)
+
+  useEffect(() => {
+    if (categories.length > 0) {
+      // Optional: dispatch(setAllCategory(categories)) if needed elsewhere
+    }
+  }, [categories]);
+
+  // Fetch subcategories on mount if not loaded (avoid redundant calls)
+  useEffect(() => {
+    if (allSubCategory.length === 0 && !loadingSubCategory) {
+      dispatch(fetchSubCategories())
+    }
+  }, [dispatch, allSubCategory.length, loadingSubCategory])
+
+  // Memoize the category list
+  const categoryList = useMemo(() => categories || [], [categories]);
 
   return (
-   <section className='bg-gray-50 min-h-screen'>
-      {/* Banner */}
-      <div className='w-full'>
-          <div className='w-full h-[500px] bg-gradient-to-r from-blue-100 to-purple-100 shadow-md'>
-              <img
-                src={banner}
-                className='w-full h-full hidden lg:block object-cover'
-                alt='banner' 
-              />
-              <img
-                src={bannerMobile}
-                className='w-full h-full lg:hidden object-cover'
-                alt='banner' 
-              />
-          </div>
+    <section className="bg-gray-50 min-h-screen">
+      {/* Banner - Full Width with proper image dimensions */}
+      <div className="w-full">
+        <div className="w-full h-[35vh] min-h-[300px] bg-transparent shadow-lg overflow-hidden">
+          <img 
+            src={bannerDesktop}
+            alt="SoleVibe - Premium Footwear & Fashion | Best Deals on Shoes"
+            className="w-full h-full object-cover hidden md:block"
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
+            onError={(e) => console.log('Desktop Banner load error:', e.target.src)}
+          />
+          <img 
+            src={bannerDesktop}
+            alt="SoleVibe - Premium Footwear & Fashion | Best Deals on Shoes"
+            className="w-full h-full object-cover block md:hidden"
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
+            onError={(e) => console.log('Mobile Banner load error:', e.target.src)}
+          />
+        </div>
       </div>
       
-      {/* Categories Section */}
-      <div className='container mx-auto px-4 my-8'>
-          <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6'>
-            <h2 className='text-xl lg:text-2xl font-semibold text-gray-800'>Shop by Category</h2>
-          </div>
-          <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6'>
-              {
-                loadingCategory ? (
-                  new Array(4).fill(null).map((c,index)=>{
-                    return(
-                      <div key={index+"loadingcategory"} className='bg-white rounded-xl p-4 min-h-56 grid gap-3 shadow animate-pulse'>
-                        <div className='bg-gray-200 min-h-32 rounded-lg'></div>
-                        <div className='bg-gray-200 h-6 rounded mx-auto w-28'></div>
-                      </div>
-                    )
-                  })
-                ) : categoryData.length === 0 ? (
-                  <div className="col-span-2 sm:col-span-3 lg:col-span-4 text-center py-8 text-gray-500">
-                    No categories found. Please add categories from the admin panel.
-                  </div>
-                ) : (
-                  categoryData.slice(0, 4).map((cat,index)=>{
-                    return(
-                      <div key={cat._id+"displayCategory"} 
-                           className='w-full h-full cursor-pointer transform transition-all duration-300 hover:scale-105' 
-                           onClick={() => navigate('/shop')}>
-                        <div className='bg-white rounded-xl p-4 min-h-56 grid gap-3 shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 hover:border-purple-200'>
-                            <div className='relative overflow-hidden rounded-lg bg-gray-50'>
-                              <img 
-                                src={cat.image}
-                                className='w-full h-32 object-contain transition-transform duration-300 hover:scale-110'
-                                alt={cat.name}
-                              />
-                            </div>
-                            <div className='text-center font-semibold text-lg lg:text-xl text-gray-800 hover:text-purple-600 transition-colors'>
-                              {cat.name}
-                            </div>
-                        </div>
-                      </div>
-                    )
-                  })
-                )
-              }
-          </div>
-      </div>
-
-      {/* Display category products */}
-      {
-        categoryData?.map((c,index)=>{
-          return(
+      {/* Display category products with lazy loading */}
+      {categoryList.length === 0 ? (
+        <div className="text-center py-12 text-gray-500">
+          Loading categories or no categories available. Please wait or check connection.
+        </div>
+      ) : (
+        categoryList.map((c) => (
+          <Suspense key={c?._id || Math.random()} fallback={<LoadingFallback />}>
             <CategoryWiseProductDisplay 
-              key={c?._id+"CategorywiseProduct"} 
               id={c?._id} 
               name={c?.name}
             />
-          )
-        })
-      }
+          </Suspense>
+        ))
+      )}
+    </section>
+  );
+};
 
-   </section>
-  )
-}
-
-export default Home
+export default memo(Home);

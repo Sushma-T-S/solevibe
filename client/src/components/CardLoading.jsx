@@ -2,23 +2,25 @@ import React from 'react'
 
 const CardLoading = () => {
   return (
-    <div className='border py-2 lg:p-4 grid gap-1 lg:gap-3 min-w-36 lg:min-w-52 rounded cursor-pointer bg-white animate-pulse'>
-      <div className='min-h-24 bg-blue-50 rounded'>
+    <div className='border border-gray-200 rounded-sm cursor-pointer bg-white animate-pulse h-full flex flex-col'>
+      {/* Image placeholder with same height as product card */}
+      <div className='w-full h-64 sm:h-72 bg-gray-100'>
       </div>
-      <div className='p-2 lg:p-3  bg-blue-50 rounded w-20'>
-      </div>
-      <div className='p-2 lg:p-3 bg-blue-50 rounded'>
-      </div>
-      <div className='p-2 lg:p-3 bg-blue-50 rounded w-14'>
-      </div>
-
-      <div className='flex items-center justify-between gap-3'>
-        <div className='p-2 lg:p-3 bg-blue-50 rounded w-20'>
+      
+      {/* Content placeholder */}
+      <div className='px-2 py-1.5 flex-1 flex flex-col justify-between border-t border-gray-100'>
+        <div className='space-y-2'>
+          <div className='h-3 bg-gray-200 rounded w-3/4'>
+          </div>
+          <div className='h-3 bg-gray-200 rounded w-1/2'>
+          </div>
         </div>
-        <div className='p-2 lg:p-3 bg-blue-50 rounded w-20'>
+        
+        <div className='mt-1.5'>
+          <div className='h-6 bg-gray-200 rounded'>
+          </div>
         </div>
       </div>
-
     </div>
   )
 }

@@ -4,30 +4,78 @@ import ProductModel from "../models/product.model.js";
 
 export const adminDashboardStatsController = async (req, res) => {
   try {
-    const [users, orders, products] = await Promise.all([
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    // Basic counts
+    const [users, totalOrders, products] = await Promise.all([
       UserModel.countDocuments({}),
       OrderModel.countDocuments({}),
-      ProductModel.countDocuments({}),
+      ProductModel.countDocuments({})
     ]);
 
+    // Total revenue
     const revenueAgg = await OrderModel.aggregate([
-      { $match: { payment_status: { $in: ["paid", "CASH ON DELIVERY"] } } },
-      { $group: { _id: null, revenue: { $sum: "$totalAmt" } } },
+      { $match: { payment_status: { $nin: [""] } } },
+      { $group: { _id: null, revenue: { $sum: "$totalAmt" } } }
+    ]);
+    const totalRevenue = revenueAgg[0]?.revenue || 0;
+
+    // Daily sales and orders (last 30 days)
+    const dailyDataRaw = await OrderModel.aggregate([
+      { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+      { $addFields: { dateStr: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } } } },
+      { $group: { _id: "$dateStr", sales: { $sum: "$totalAmt" }, orderCount: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+      { $limit: 30 }
+    ]);
+    const dailySales = dailyDataRaw.map(d => ({ name: d._id, sales: Math.round(d.sales), orders: d.orderCount }));
+
+    // Status counts
+    const statusCountsRaw = await OrderModel.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } }
+    ]);
+    const statusCounts = {};
+    statusCountsRaw.forEach(stat => {
+      statusCounts[stat._id] = stat.count;
+    });
+
+    // Top 5 products by revenue
+    const topProductsRaw = await OrderModel.aggregate([
+      { $group: { _id: "$product_details.name", revenue: { $sum: "$totalAmt" }, count: { $sum: 1 } } },
+      { $sort: { revenue: -1 } },
+      { $limit: 5 },
+      { $project: { name: "$_id", revenue: 1, count: 1, _id: 0 } }
     ]);
 
-    const revenue = revenueAgg?.[0]?.revenue || 0;
+    // Mock product views data (add real tracking later)
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const productViewsData = days.map((day, index) => ({
+      day,
+      thisWeek: Math.floor((Math.sin(index * 0.8) * 0.3 + 0.7) * 50000 + 5000),
+      lastWeek: Math.floor((Math.sin(index * 0.6) * 0.25 + 0.6) * 45000 + 3000)
+    }));
 
     return res.json({
-      message: "Admin dashboard stats",
+      message: "Admin dashboard stats with charts data",
       success: true,
       error: false,
-      data: { users, orders, products, revenue },
+      data: {
+        users,
+        orders: totalOrders,
+        products,
+        revenue: totalRevenue,
+        dailySales,  // [{name, sales, orders}]
+        statusCounts,  // {pending: x, ...}
+        topProducts: topProductsRaw,
+        productViewsData
+      }
     });
   } catch (error) {
+    console.error('Dashboard stats error:', error);
     return res.status(500).json({
-      message: error.message || error,
+      message: error.message || "Server error",
       success: false,
-      error: true,
+      error: true
     });
   }
 };

@@ -74,6 +74,15 @@ const userSchema = new mongoose.Schema({
     timestamps : true
 })
 
+// Production indexes for performance (1M+ users)
+
+userSchema.index({ mobile: 1 })
+userSchema.index({ role: 1, status: 1 })
+userSchema.index({ 'address_details': 1 })
+userSchema.index({ 'shopping_cart': 1 })
+userSchema.index({ createdAt: -1 })
+userSchema.index({ verify_email: 1 })
+
 const UserModel = mongoose.model("User",userSchema)
 
 export default UserModel

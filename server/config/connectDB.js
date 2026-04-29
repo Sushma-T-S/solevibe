@@ -9,6 +9,12 @@ if(!process.env.MONGODB_URI){
 }
 
 async function connectDB(){
+    dotenv.config(); // Load .env for standalone scripts
+    if(!process.env.MONGODB_URI){
+        throw new Error(
+            "Please provide MONGODB_URI in the .env file"
+        )
+    }
     try {
         await mongoose.connect(process.env.MONGODB_URI)
         console.log("connect DB")

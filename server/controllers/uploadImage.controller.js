@@ -5,8 +5,7 @@ const uploadImageController = async (request, response) => {
     console.log("===== UPLOAD DEBUG =====");
     console.log("Upload request received");
     console.log("File object:", file);
-    console.log("File is undefined:", file === undefined);
-    console.log("Request body:", request.body);
+    console.log("File path:", file?.path);
     console.log("=======================");
 
     if (!file) {
@@ -19,12 +18,12 @@ const uploadImageController = async (request, response) => {
 
     let imageUrl;
 
-    // If using Cloudinary storage - file.path contains the full URL
+    // If using Cloudinary storage - file.path contains the full URL from multer-storage-cloudinary
     if (file.path && typeof file.path === 'string' && file.path.startsWith('http')) {
       imageUrl = file.path;
-      console.log("Using Cloudinary URL:", imageUrl);
+      console.log("Using Cloudinary URL from multer:", imageUrl);
     } 
-    // If using local disk storage
+    // If using local disk storage as fallback
     else {
       imageUrl = `/uploads/${file.filename}`;
       console.log("Using local URL:", imageUrl);
@@ -34,7 +33,7 @@ const uploadImageController = async (request, response) => {
 
     return response.json({
       message: "Upload done",
-      data: imageUrl,
+      data: { url: imageUrl },
       success: true,
       error: false,
     });
@@ -54,3 +53,4 @@ const uploadImageController = async (request, response) => {
 };
 
 export default uploadImageController;
+

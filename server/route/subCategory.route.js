@@ -4,6 +4,18 @@ import { AddSubCategoryController, deleteSubCategoryController, getSubCategoryCo
 
 const subCategoryRouter = Router()
 
+/**
+ * @swagger
+ * /api/subcategory/create:
+ *   post:
+ *     summary: Create subcategory
+ *     tags: [SubCategories]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Subcategory created
+ */
 subCategoryRouter.post('/create',auth,AddSubCategoryController)
 subCategoryRouter.post('/get',getSubCategoryController)
 subCategoryRouter.get('/get-by-category/:categoryId',getSubCategoryByCategoryController)

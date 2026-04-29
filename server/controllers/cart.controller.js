@@ -4,7 +4,7 @@ import UserModel from "../models/user.model.js";
 export const addToCartItemController = async(request,response)=>{
     try {
         const  userId = request.userId
-        const { productId } = request.body
+        const { productId, quantity = 1, color = null, size = null } = request.body
         
         if(!productId){
             return response.status(402).json({
@@ -14,21 +14,48 @@ export const addToCartItemController = async(request,response)=>{
             })
         }
 
-        const checkItemCart = await CartProductModel.findOne({
+        // Check if item already exists with same product, color and size
+        const query = {
             userId : userId,
             productId : productId
-        })
+        }
+        
+        // If color and size are provided, include them in the query
+        if (color) {
+            query.color = color
+        }
+        if (size) {
+            query.size = size
+        }
+
+        const checkItemCart = await CartProductModel.findOne(query)
 
         if(checkItemCart){
-            return response.status(400).json({
-                message : "Item already in cart"
+            // Item exists, update quantity
+            const updateCart = await CartProductModel.updateOne(
+                query,
+                { $inc: { quantity: quantity } }
+            )
+            
+            await UserModel.updateOne(
+                { _id: userId, shopping_cart: { $ne: productId } },
+                { $push: { shopping_cart: productId } }
+            )
+
+            return response.json({
+                message : "Item quantity updated in cart",
+                error : false,
+                success : true,
+                data: checkItemCart
             })
         }
 
         const cartItem = new CartProductModel({
-            quantity : 1,
+            quantity : quantity,
             userId : userId,
-            productId : productId
+            productId : productId,
+            color: color,
+            size: size
         })
         const save = await cartItem.save()
 
@@ -55,28 +82,30 @@ export const addToCartItemController = async(request,response)=>{
     }
 }
 
-export const getCartItemController = async(request,response)=>{
+export const getCartItemController = async (request, response) => {
     try {
-        const userId = request.userId
+        const userId = request.userId;
+        console.log('🛒 Backend Cart Debug - User:', userId);
 
-        const cartItem =  await CartProductModel.find({
-            userId : userId
-        }).populate('productId')
+        const cartItem = await CartProductModel.find({
+            userId: userId
+        }).populate('productId');
+        console.log('🛒 Backend Found items:', cartItem.length, cartItem[0]);
 
         return response.json({
-            data : cartItem,
-            error : false,
-            success : true
-        })
+            data: cartItem,
+            error: false,
+            success: true
+        });
 
     } catch (error) {
         return response.status(500).json({
-            message : error.message || error,
-            error : true,
-            success : false
-        })
+            message: error.message || error,
+            error: true,
+            success: false
+        });
     }
-}
+};
 
 export const updateCartItemQtyController = async(request,response)=>{
     try {

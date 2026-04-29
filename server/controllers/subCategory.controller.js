@@ -4,9 +4,9 @@ export const AddSubCategoryController = async(request,response)=>{
     try {
         const { name, image, category } = request.body 
 
-        if(!name || !image || !category?.[0] ){
+        if(!name || !category?.[0] ){
             return response.status(400).json({
-                message : "Provide name, image, category",
+                message : "Provide name, category",
                 error : true,
                 success : false
             })
@@ -14,7 +14,7 @@ export const AddSubCategoryController = async(request,response)=>{
 
         const payload = {
             name,
-            image,
+            image : image || "",
             category
         }
 

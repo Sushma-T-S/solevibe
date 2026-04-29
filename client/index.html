@@ -4,10 +4,58 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>solevibe</title>
+    
+    <!-- SEO Meta Tags -->
+    <title>SoleVibe - Premium Footwear & Fashion</title>
+    <meta name="description" content="Discover the latest trends in footwear and fashion at SoleVibe. Shop our curated collection of premium shoes, sneakers, and accessories with exclusive deals and fast delivery." />
+    <meta name="keywords" content="shoes, footwear, sneakers, fashion, online shopping, SoleVibe" />
+    <meta name="author" content="SoleVibe" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://solevibe.com/" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://solevibe.com/" />
+    <meta property="og:title" content="SoleVibe - Premium Footwear & Fashion" />
+    <meta property="og:description" content="Discover the latest trends in footwear and fashion at SoleVibe." />
+    <meta property="og:image" content="https://solevibe.com/og-image.jpg" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://solevibe.com/" />
+    <meta property="twitter:title" content="SoleVibe - Premium Footwear & Fashion" />
+    <meta property="twitter:description" content="Discover the latest trends in footwear and fashion at SoleVibe." />
+    
+    <!-- Performance Optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://solevibe.com" />
+    
+    <!-- Preload critical assets (commented to fix unused preload warning)
+    <link rel="preload" as="image" href="/assets/banner.png" /> -->
+    
+    <!-- DNS Prefetch for external resources -->
+<link rel="dns-prefetch" href="https://res.cloudinary.com" />
+    <link rel="preload" as="style" href="/src/index.css">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&amp;display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&amp;display=swap"></noscript>
+    
+    <!-- Critical CSS inline hint -->
+    <style>
+      body { visibility: hidden; }
+      body.loaded { visibility: visible; }
+    </style>
+    
+    <script>
+      // Prevent FOUC
+      document.addEventListener('DOMContentLoaded', function() {
+        document.body.classList.add('loaded');
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+

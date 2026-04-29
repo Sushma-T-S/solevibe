@@ -4,6 +4,18 @@ import { addToCartItemController, deleteCartItemQtyController, getCartItemContro
 
 const cartRouter = Router()
 
+/**
+ * @swagger
+ * /api/cart/create:
+ *   post:
+ *     summary: Add to cart
+ *     tags: [Cart]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Item added to cart
+ */
 cartRouter.post('/create',auth,addToCartItemController)
 cartRouter.get("/get",auth,getCartItemController)
 cartRouter.put('/update-qty',auth,updateCartItemQtyController)

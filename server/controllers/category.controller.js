@@ -92,7 +92,8 @@ export const updateCategoryController = async(request,response)=>{
 
 export const deleteCategoryController = async(request,response)=>{
     try {
-        const { _id } = request.body 
+        const { _id, force } = request.body 
+        const forceDelete = force === true || force === "true"
 
         const checkSubCategory = await SubCategoryModel.find({
             category : {
@@ -106,11 +107,21 @@ export const deleteCategoryController = async(request,response)=>{
             }
         }).countDocuments()
 
-        if(checkSubCategory >  0 || checkProduct > 0 ){
+        // If force delete is enabled, delete related subcategories and products first
+        if (forceDelete) {
+            // Delete all subcategories under this category
+            await SubCategoryModel.deleteMany({ category: { "$in": [_id] } })
+            
+            // Delete all products under this category
+            await ProductModel.deleteMany({ category: { "$in": [_id] } })
+            
+            console.log(`Force deleted category ${_id} with ${checkSubCategory} subcategories and ${checkProduct} products`)
+        } else if(checkSubCategory > 0 || checkProduct > 0 ){
             return response.status(400).json({
-                message : "Category is already use can't delete",
+                message : `Category is in use by ${checkSubCategory} subcategories and ${checkProduct} products. Use force=true to delete anyway.`,
                 error : true,
-                success : false
+                success : false,
+                details: { subcategories: checkSubCategory, products: checkProduct }
             })
         }
 

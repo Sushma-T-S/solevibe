@@ -10,12 +10,57 @@ import AxiosToastError from "../utils/AxiosToastError";
 import { SET_ALL_BRAND } from "../store/productSlice";
 
 
-const defaultSizes = ["5", "6", "7", "8", "9", "10", "11", "12"];
+// Indian size ranges for footwear - category based
+const INDIAN_SIZES = {
+  Men: ['6', '7', '8', '9', '10', '11', '12'],
+  Women: ['5', '6', '7', '8', '9', '10'],
+  Boys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
+  Girls: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
+  Kids: ['1', '2', '3', '4', '5', '6']
+}
 
-const createEmptyVariant = () => ({
+// Helper to get category name from category object
+const getCategoryName = (category) => {
+  if (!category) return null;
+  if (typeof category === 'string') return category;
+  return category?.name || category?._id;
+}
+
+// Get available sizes based on selected category
+const getAvailableSizes = (categoryName) => {
+  if (!categoryName) return INDIAN_SIZES.Men; // Default sizes
+  // Try exact match first, then check if category name contains keywords
+  if (INDIAN_SIZES[categoryName]) {
+    return INDIAN_SIZES[categoryName];
+  }
+  // Check for partial matches (e.g., "Mens", "Womens", "Men's Footwear", "Women Shoes", etc.)
+  const categoryLower = categoryName.toLowerCase();
+  
+  // Handle Mens/Man variants
+  if (categoryLower.includes('men') || categoryLower.includes('mens') || categoryLower.includes('man')) {
+    return INDIAN_SIZES.Men;
+  }
+  // Handle Womens/Women variants
+  if (categoryLower.includes('women') || categoryLower.includes('womens') || categoryLower.includes('woman')) {
+    return INDIAN_SIZES.Women;
+  }
+  if (categoryLower.includes('boys')) {
+    return INDIAN_SIZES.Boys;
+  }
+  if (categoryLower.includes('girls')) {
+    return INDIAN_SIZES.Girls;
+  }
+  if (categoryLower.includes('kids')) {
+    return INDIAN_SIZES.Kids;
+  }
+  return INDIAN_SIZES.Men; // Default fallback
+}
+
+// Create empty variant with sizes based on category
+const createEmptyVariant = (sizes) => ({
   color: "",
   images: [],
-  sizes: defaultSizes.map((s) => ({ size: s, stock: 0 })),
+  sizes: (sizes || INDIAN_SIZES.Men).map((s) => ({ size: s, stock: 0 })),
 });
 
 const sumVariantStock = (variants) =>
@@ -84,16 +129,50 @@ const UploadProduct = () => {
     },
   });
 
-  const [variants, setVariants] = useState([createEmptyVariant()]);
+  const [variants, setVariants] = useState([createEmptyVariant(INDIAN_SIZES.Men)]);
   const computedStock = useMemo(() => sumVariantStock(variants), [variants]);
 
   const [selectCategory, setSelectCategory] = useState("");
   const [selectSubCategory, setSelectSubCategory] = useState("");
-
+  
+  // First, get the selected category IDs
   const selectedCategoryIds = useMemo(
     () => (data.category || []).map(getId).filter(Boolean),
     [data.category]
   );
+  
+  // Get selected category name for size filtering
+  // Can be from main category OR from subcategory's parent category
+  const selectedCategoryName = useMemo(() => {
+    // First check if a main category is selected
+    if (selectedCategoryIds.length) {
+      const firstCategoryId = selectedCategoryIds[0];
+      const category = allCategory.find(c => c._id === firstCategoryId);
+      if (category?.name) {
+        return category.name;
+      }
+    }
+    
+    // If no main category, check subcategory for parent category
+    if (data.subCategory && data.subCategory.length > 0) {
+      const firstSubCategory = data.subCategory[0];
+      // Subcategory has category array with parent category IDs
+      if (firstSubCategory.category && firstSubCategory.category.length > 0) {
+        const parentCatId = firstSubCategory.category[0];
+        const parentCategory = allCategory.find(c => c._id === parentCatId || c._id === parentCatId?._id);
+        if (parentCategory?.name) {
+          return parentCategory.name;
+        }
+      }
+    }
+    
+    return null;
+  }, [selectedCategoryIds, allCategory, data.subCategory]);
+  
+  // Get available sizes based on selected category
+  const availableSizes = useMemo(() => {
+    return getAvailableSizes(selectedCategoryName);
+  }, [selectedCategoryName]);
 
   const filteredSubCategoryOptions = useMemo(() => {
     if (!selectedCategoryIds.length) return [];
@@ -103,7 +182,7 @@ const UploadProduct = () => {
     });
   }, [allSubCategory, selectedCategoryIds]);
 
-  const addVariant = () => setVariants((prev) => [...prev, createEmptyVariant()]);
+  const addVariant = () => setVariants((prev) => [...prev, createEmptyVariant(availableSizes)]);
   const removeVariant = (idx) => setVariants((prev) => prev.filter((_, i) => i !== idx));
 
   const updateVariant = (idx, patch) => {
@@ -206,7 +285,7 @@ const UploadProduct = () => {
           image: [],
           more_details: { brand: "", gender: "" },
         });
-        setVariants([createEmptyVariant()]);
+        setVariants([createEmptyVariant(INDIAN_SIZES.Men)]);
         setSelectCategory("");
         setSelectSubCategory("");
       }
@@ -336,6 +415,11 @@ const UploadProduct = () => {
                       if (!value) return;
                       const category = allCategory.find((el) => el._id === value);
                       if (!category) return;
+                      
+                      // Get sizes for this category and reset variants
+                      const categorySizes = getAvailableSizes(category.name);
+                      setVariants([createEmptyVariant(categorySizes)]);
+                      
                       setData((p) => {
                         const nextCategory = p.category.some((c) => getId(c) === category._id) ? p.category : [...p.category, category];
                         // Keep only subcategories that still match selected categories
@@ -392,6 +476,17 @@ const UploadProduct = () => {
                       if (!value) return;
                       const sub = filteredSubCategoryOptions.find((el) => el._id === value);
                       if (!sub) return;
+                      
+                      // Get parent category from subcategory and reset variants with correct sizes
+                      if (sub.category && sub.category.length > 0) {
+                        const parentCatId = sub.category[0];
+                        const parentCategory = allCategory.find(c => c._id === parentCatId || c._id === parentCatId?._id);
+                        if (parentCategory?.name) {
+                          const categorySizes = getAvailableSizes(parentCategory.name);
+                          setVariants([createEmptyVariant(categorySizes)]);
+                        }
+                      }
+                      
                       setData((p) => ({
                         ...p,
                         subCategory: p.subCategory.some((s) => s?._id === sub._id) ? p.subCategory : [...p.subCategory, sub],
@@ -445,6 +540,18 @@ const UploadProduct = () => {
                     + Add color
                   </button>
                 </div>
+                
+                {/* Category Size Indicator */}
+                {selectedCategoryName && (
+                  <div className="mt-3 px-3 py-2 bg-indigo-50 border border-indigo-200 rounded-lg flex items-center gap-2">
+                    <span className="text-sm font-medium text-indigo-700">
+                      📏 Sizes for <span className="font-bold">{selectedCategoryName}</span>:
+                    </span>
+                    <span className="text-sm text-indigo-600">
+                      {availableSizes.join(', ')}
+                    </span>
+                  </div>
+                )}
 
                 <div className="grid gap-4 mt-4">
                   {variants.map((v, idx) => (

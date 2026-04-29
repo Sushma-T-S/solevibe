@@ -1,9 +1,9 @@
-import sendEmail from '../config/sendEmail.js'
+import { sendEmail } from '../config/sendEmail.js'
 import UserModel from '../models/user.model.js'
 import bcryptjs from 'bcryptjs'
 import verifyEmailTemplate from '../utils/verifyEmailTemplate.js'
 import generatedAccessToken from '../utils/generatedAccessToken.js'
-import genertedRefreshToken from '../utils/generatedRefreshToken.js'
+import generatedRefreshToken from '../utils/generatedRefreshToken.js'
 import uploadImageClodinary from '../utils/uploadImageClodinary.js'
 import generatedOtp from '../utils/generatedOtp.js'
 import forgotPasswordTemplate from '../utils/forgotPasswordTemplate.js'
@@ -43,27 +43,38 @@ export async function registerUserController(request,response){
         const newUser = new UserModel(payload)
         const save = await newUser.save()
 
+        console.log(`Sending verify email to ${email}`);
         const VerifyEmailUrl = `${process.env.FRONTEND_URL}/verify-email?code=${save?._id}`
 
         const verifyEmail = await sendEmail({
-            sendTo : email,
-            subject : "Verify email from binkeyit",
+            to : email,
+            subject : "Verify email from SoleVibe",
             html : verifyEmailTemplate({
                 name,
                 url : VerifyEmailUrl
             })
         })
 
+        if (!verifyEmail) {
+            console.error(`❌ Failed to send verification email to ${email}. User created anyway. Check Resend dashboard.`);
+        } else {
+            console.log(`✅ Verify email sent successfully to ${email}`);
+        }
+
         return response.json({
-            message : "User register successfully",
+            message : verifyEmail 
+                ? "User registered successfully. Please check your email to verify account."
+                : "User registered successfully. Verification email failed to send (check server logs). Account may need manual verification.",
             error : false,
             success : true,
-            data : save
+            data : save,
+            emailStatus : verifyEmail ? 'sent' : 'failed'
         })
 
     } catch (error) {
+        console.error('Registration error:', error);
         return response.status(500).json({
-            message : error.message || error,
+            message : error.message || 'Registration failed',
             error : true,
             success : false
         })
@@ -145,7 +156,7 @@ export async function loginController(request,response){
         }
 
         const accesstoken = await generatedAccessToken(user._id)
-        const refreshToken = await genertedRefreshToken(user._id)
+        const refreshToken = await generatedRefreshToken(user._id)
 
         const updateUser = await UserModel.findByIdAndUpdate(user?._id,{
             last_login_date : new Date()
@@ -298,25 +309,32 @@ export async function forgotPasswordController(request,response) {
             })
         }
 
+        console.log(`Forgot password request for email: ${email}`);
         const otp = generatedOtp()
-        const expireTime = new Date() + 60 * 60 * 1000 // 1hr
+        const expireTime = new Date(Date.now() + 60 * 60 * 1000) // 1hr
 
         const update = await UserModel.findByIdAndUpdate(user._id,{
             forgot_password_otp : otp,
             forgot_password_expiry : new Date(expireTime).toISOString()
         })
 
-        await sendEmail({
-            sendTo : email,
-            subject : "Forgot password from Binkeyit",
+        const emailResult = await sendEmail({
+            to : email,
+            subject : "Forgot password from SoleVibe",
             html : forgotPasswordTemplate({
                 name : user.name,
                 otp : otp
             })
         })
 
+        if (!emailResult) {
+            console.error(`Failed to send forgot password OTP to ${email}`);
+        } else {
+            console.log(`Forgot password OTP sent successfully to ${email}`);
+        }
+
         return response.json({
-            message : "check your email",
+            message : "OTP sent to your email. Check spam folder if not received.",
             error : false,
             success : true
         })

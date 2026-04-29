@@ -1,44 +1,50 @@
 import { Resend } from "resend";
 import dotenv from "dotenv";
+
 dotenv.config();
 
-// Create resend instance only if API key exists
 let resend = null;
 
-if (process.env.RESEND_API) {
-  resend = new Resend(process.env.RESEND_API);
+if (process.env.RESEND_API_KEY) {
+  resend = new Resend(process.env.RESEND_API_KEY);
+  console.log(" Resend email service initialized");
 } else {
-  console.log("⚠ RESEND_API not found in .env file");
+  console.warn(" RESEND_API_KEY missing - email disabled");
 }
 
-const sendEmail = async ({ sendTo, subject, html }) => {
+const sendEmail = async ({ to, subject, html }) => {
   try {
-    // If resend is not configured
+    // Validate required fields
+    if (!to || !subject || !html) {
+      console.error(`Email validation failed: missing required fields. to=${to}, subject=${subject ? 'present' : 'missing'}, html=${html ? 'present' : 'missing'}`);
+      return false;
+    }
+
     if (!resend) {
-      console.log("Email service not configured. Skipping email.");
-      return null;
+      console.warn(`Email to ${to} skipped (no API key)`);
+      return false;
     }
 
     const { data, error } = await resend.emails.send({
-    //   from: "solevibe <noreply@yourdomain.com>", // change later to verified domain
-      from: "solevibe <onboarding@resend.dev>",  // ✅ use this for now
-      to: sendTo,
-      subject: subject,
-      html: html,
+      from: "SoleVibe <onboarding@resend.dev>",
+      to,
+      subject,
+      html,
     });
 
     if (error) {
       console.error("Resend error:", error);
-      return null;
+      return false;
     }
 
-    console.log("Email sent successfully");
-    return data;
+    console.log("Email sent to", to);
+    return true;
 
   } catch (error) {
-    console.error("Email send failed:", error);
-    return null;
+    console.error(`Email failed to ${to}:`, error);
+    return false;
   }
 };
 
-export default sendEmail;
+export { sendEmail };
+

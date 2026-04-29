@@ -12,6 +12,18 @@ import {
 
 const adminRouter = Router();
 
+/**
+ * @swagger
+ * /api/admin/dashboard/stats:
+ *   get:
+ *     summary: Admin dashboard stats
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Stats data
+ */
 adminRouter.get("/dashboard/stats", auth, admin, adminDashboardStatsController);
 adminRouter.get("/orders/all", auth, admin, adminAllOrdersController);
 adminRouter.put("/orders/update-status", auth, admin, adminUpdateOrderStatusController);

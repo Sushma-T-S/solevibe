@@ -5,6 +5,18 @@ import upload from '../middleware/multer.js'
 const uploadRouter = Router()
 
 // Upload endpoint with proper error handling
+/**
+ * @swagger
+ * /api/file/upload:
+ *   post:
+ *     summary: Upload image
+ *     tags: [Upload]
+ *     consumes:
+ *       - multipart/form-data
+ *     responses:
+ *       200:
+ *         description: Image uploaded
+ */
 uploadRouter.post("/upload", (req, res) => {
     upload.single("image")(req, res, function(err) {
         if (err) {

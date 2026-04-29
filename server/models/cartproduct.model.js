@@ -12,6 +12,14 @@ const cartProductSchema = new mongoose.Schema({
     userId : {
         type : mongoose.Schema.ObjectId,
         ref : "User"
+    },
+    color: {
+        type: String,
+        default: null
+    },
+    size: {
+        type: String,
+        default: null
     }
 },{
     timestamps : true

@@ -11,175 +11,121 @@ import ResetPassword from "../pages/ResetPassword";
 import UserMenuMobile from "../pages/UserMenuMobile";
 import Dashboard from "../layouts/Dashboard";
 import Profile from "../pages/Profile";
-import MyOrders from "../pages/MyOrders";
+import MyOrders from "../pages/MyOrders_Redesign_fixed.jsx";
 import Address from "../pages/Address";
 import ProductListPage from "../pages/ProductListPage";
 import ProductDisplayPage from "../pages/ProductDisplayPage";
 import CartMobile from "../pages/CartMobile";
 import CheckoutPage from "../pages/CheckoutPage";
+import PaymentPage from "../pages/PaymentPage";
 import Success from "../pages/Success";
 import Cancel from "../pages/Cancel";
 import Wishlist from "../pages/Wishlist";
-
-// Admin imports
-import AdminLayout from "../admin/layout/AdminLayout";
-import AdminDashboard from "../admin/pages/AdminDashboard";
-import Categories from "../admin/pages/Categories";
-import SubCategories from "../admin/pages/SubCategories";
-import Brands from "../admin/pages/Brands";
-import AdminUploadProduct from "../admin/pages/UploadProduct";
-import Products from "../admin/pages/Products";
-import Orders from "../admin/pages/Orders";
-import Users from "../admin/pages/Users";
-import Settings from "../admin/pages/Settings";
-import Analytics from "../admin/pages/Analytics";
+import Cart from "../pages/Cart";
 
 const router = createBrowserRouter([
     {
-        path : "/",
-        element : <App/>,
-        children : [
+        path: "/",
+        element: <App/>,
+        children: [
             {
-                path : "",
-                element : <Home/>
+                path: "",
+                element: <Home/>
             },
             {
-                path : "search",
-                element : <SearchPage/>
+                path: "search",
+                element: <SearchPage/>
             },
             {
-                path : "shop",
-                element : <ShopPage/>
+                path: "shop",
+                element: <ShopPage/>
             },
             {
-                path : 'login',
-                element : <Login/>
+                path: 'login',
+                element: <Login/>
             },
             {
-                path : "register",
-                element : <Register/>
+                path: "register",
+                element: <Register/>
             },
             {
-                path : "forgot-password",
-                element : <ForgotPassword/>
+                path: "forgot-password",
+                element: <ForgotPassword/>
             },
             {
-                path : "verification-otp",
-                element : <OtpVerification/>
+                path: "verification-otp",
+                element: <OtpVerification/>
             },
             {
-                path : "reset-password",
-                element : <ResetPassword/>
+                path: "reset-password",
+                element: <ResetPassword/>
             },
             {
-                path : "user",
-                element : <UserMenuMobile/>
+                path: "user",
+                element: <UserMenuMobile/>
             },
             {
-                path : "dashboard",
-                element : <Dashboard/>,
-                children : [
+                path: "dashboard",
+                element: <Dashboard/>,
+                children: [
                     {
-                        path : "",
-                        element : <Profile/>
+                        path: "",
+                        element: <Profile/>
                     },
                     {
-                        path : "profile",
-                        element : <Profile/>
+                        path: "profile",
+                        element: <Profile/>
                     },
                     {
-                        path : "myorders",
-                        element : <MyOrders/>
+                        path: "myorders",
+                        element: <MyOrders/>
                     },
                     {
-                        path : "address",
-                        element : <Address/>
+                        path: "address",
+                        element: <Address/>
+                    },
+                    {
+                        path: "cart",
+                        element: <CartMobile/>
                     }
                 ]
             },
             {
-                path : ":category",
-                children : [
+                path: ":category",
+                children: [
                     {
-                        path : ":subCategory",
-                        element : <ProductListPage/>
+                        path: ":subCategory",
+                        element: <ProductListPage/>
                     }
                 ]
             },
             {
-                path : "product/:product",
-                element : <ProductDisplayPage/>
+                path: "product/:id/:slug",
+                element: <ProductDisplayPage />
             },
             {
-                path : 'cart',
-                element : <CartMobile/>
+                path: 'cart',
+                element: <CartMobile/>
             },
             {
-                path : "checkout",
-                element : <CheckoutPage/>
+                path: "checkout",
+                element: <CheckoutPage/>
             },
             {
-                path : "success",
-                element : <Success/>
+                path: "payment",
+                element: <PaymentPage/>
             },
             {
-                path : 'cancel',
-                element : <Cancel/>
+                path: "success",
+                element: <Success/>
             },
             {
-                path : 'wishlist',
-                element : <Wishlist/>
-            }
-        ]
-    },
-    // Admin Routes - New Professional Structure
-    {
-        path : "/admin",
-        element : <AdminLayout/>,
-        children : [
-            {
-                path : "",
-                element : <AdminDashboard/>
+                path: 'cancel',
+                element: <Cancel/>
             },
             {
-                path : "dashboard",
-                element : <AdminDashboard/>
-            },
-            {
-                path : "products",
-                element : <Products/>
-            },
-            {
-                path : "upload-product",
-                element : <AdminUploadProduct/>
-            },
-            {
-                path : "categories",
-                element : <Categories/>
-            },
-            {
-                path : "subcategories",
-                element : <SubCategories/>
-            },
-            {
-                path : "brands",
-                element : <Brands/>
-            },
-            {
-                path : "orders",
-                element : <Orders/>
-            },
-            {
-                path : "users",
-                element : <Users/>
-            },
-            {
-                path : "analytics",
-                element : <Analytics/>
-            },
-            {
-                path : "settings",
-                element : <Settings/>
+                path: 'wishlist',
+                element: <Wishlist/>
             }
         ]
     }

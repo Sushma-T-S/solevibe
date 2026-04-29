@@ -21,14 +21,23 @@ Axios.interceptors.request.use(
     }
 )
 
-// Response interceptor for handling token refresh
+// Response interceptor for handling token refresh + 429 retry
 Axios.interceptors.response.use(
-    (response)=>{
+    (response) => {
         return response
     },
-    async(error)=>{
-        let originalRequest = error.config 
+    async (error) => {
+        let originalRequest = error.config
         const now = Date.now()
+        const status = error.response?.status
+
+        // 429 Rate limit retry (once, after 2s delay)
+        if (status === 429 && !originalRequest._retry) {
+            originalRequest._retry = true
+            console.log('Rate limited (429), retrying in 2s...')
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            return Axios(originalRequest)
+        }
 
         const isRefreshCall = originalRequest?.url === SummaryApi.refreshToken.url
         if (isRefreshCall) {
@@ -36,7 +45,7 @@ Axios.interceptors.response.use(
         }
 
         // If 401 Unauthorized and haven't retried yet
-        if(error.response?.status === 401 && !originalRequest._retry){
+        if (status === 401 && !originalRequest._retry) {
             originalRequest._retry = true
 
             try {
@@ -64,7 +73,7 @@ Axios.interceptors.response.use(
 
                 const response = await refreshPromise
 
-                if(response.data.success){
+                if (response.data.success) {
                     // Token is refreshed via cookies, retry original request
                     return Axios(originalRequest)
                 }

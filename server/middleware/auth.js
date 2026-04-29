@@ -40,7 +40,10 @@ const auth = async(request,response,next)=>{
         next()
 
     } catch (error) {
-        console.error("Auth middleware error:", error.message)
+console.error(`=== AUTH ERROR [${request.originalUrl}] ===`)
+        console.error('Full error:', error)
+        console.error('Error stack:', error.stack)
+        console.error('=== END AUTH ERROR ===')
         return response.status(401).json({
             message : "Unauthorized: " + error.message,
             error : true,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useGlobalContext } from '../provider/GlobalProvider'
+import { useGlobalContext } from '../provider/GlobalProvider_fixed'
 import Axios from '../utils/Axios'
 import SummaryApi from '../common/SummaryApi'
 import toast from 'react-hot-toast'
@@ -8,13 +8,16 @@ import Loading from './Loading'
 import { useSelector } from 'react-redux'
 import { FaMinus, FaPlus } from "react-icons/fa6";
 
-const AddToCartButton = ({ data }) => {
+const AddToCartButton = ({ data, selectedSize, size = "medium" }) => {
     const { fetchCartItem, updateCartItem, deleteCartItem } = useGlobalContext()
     const [loading, setLoading] = useState(false)
     const cartItem = useSelector(state => state.cartItem.cart)
     const [isAvailableCart, setIsAvailableCart] = useState(false)
     const [qty, setQty] = useState(0)
     const [cartItemDetails,setCartItemsDetails] = useState()
+
+    const isSmall = size === "small";
+    const isMedium = size === "medium";
 
     const handleADDTocart = async (e) => {
         e.preventDefault()
@@ -23,11 +26,18 @@ const AddToCartButton = ({ data }) => {
         try {
             setLoading(true)
 
+            const cartData = {
+                productId: data?._id
+            }
+            
+            // Add selectedSize if provided (from QuickViewModal)
+            if (selectedSize) {
+                cartData.size = selectedSize
+            }
+
             const response = await Axios({
                 ...SummaryApi.addTocart,
-                data: {
-                    productId: data?._id
-                }
+                data: cartData
             })
 
             const { data: responseData } = response
@@ -82,19 +92,21 @@ const AddToCartButton = ({ data }) => {
         }
     }
     return (
-        <div className='w-full max-w-[150px]'>
+        <div className="w-full">
             {
                 isAvailableCart ? (
-                    <div className='flex w-full h-full'>
-<button onClick={decreaseQty} className='bg-orange-500 hover:bg-orange-600 text-white flex-1 w-full p-1 rounded flex items-center justify-center'><FaMinus /></button>
-
-                        <p className='flex-1 w-full font-semibold px-1 flex items-center justify-center'>{qty}</p>
-
-<button onClick={increaseQty} className='bg-orange-500 hover:bg-orange-600 text-white flex-1 w-full p-1 rounded flex items-center justify-center'><FaPlus /></button>
+                    <div className="flex items-center justify-between bg-orange-500 rounded px-2 py-1">
+                        <button onClick={decreaseQty} className="text-white font-bold hover:text-gray-200">
+                            <FaMinus size={12} />
+                        </button>
+                        <span className="text-white font-semibold text-sm">{qty}</span>
+                        <button onClick={increaseQty} className="text-white font-bold hover:text-gray-200">
+                            <FaPlus size={12} />
+                        </button>
                     </div>
                 ) : (
-<button onClick={handleADDTocart} className='bg-orange-500 hover:bg-orange-600 text-white px-2 lg:px-4 py-1 rounded'>
-                        {loading ? <Loading /> : "Add"}
+                    <button onClick={handleADDTocart} className={`w-full bg-orange-500 hover:bg-orange-600 text-white rounded font-semibold transition-colors ${isSmall ? 'py-1 px-2 text-sm' : isMedium ? 'py-2 px-3 text-base' : 'py-3 px-4 text-lg'}`}>
+                        {loading ? <Loading /> : isSmall ? "Add" : "ADD TO CART"}
                     </button>
                 )
             }

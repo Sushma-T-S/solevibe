@@ -9,9 +9,10 @@ import { useSelector } from 'react-redux'
 import { valideURLConvert } from '../utils/valideURLConvert'
 
 const ProductListPage = () => {
-  const [data, setData] = useState([])
+const [data, setData] = useState([])
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
   const [totalPage, setTotalPage] = useState(1)
   const params = useParams()
   const AllSubCategory = useSelector(state => state.product.allSubCategory)
@@ -25,10 +26,23 @@ const ProductListPage = () => {
   const categoryId = params.category.split("-").slice(-1)[0]
   const subCategoryId = params.subCategory.split("-").slice(-1)[0]
 
+  // ObjectId regex: 24 hex chars
+  const isValidObjectId = (id) => /^[0-9a-fA-F]{24}$/.test(id);
 
   const fetchProductdata = async () => {
+    if (!isValidObjectId(categoryId) || !isValidObjectId(subCategoryId)) {
+      console.warn('Invalid categoryId or subCategoryId from URL:', { categoryId, subCategoryId });
+      toast.error('Invalid category or subcategory. Redirecting to shop...');
+      // Optionally: navigate('/shop') if useNavigate imported
+      setData([]);
+      setTotalPage(0);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true)
+      setError(null)
       const response = await Axios({
         ...SummaryApi.getProductByCategoryAndSubCategory,
         data: {
@@ -47,10 +61,17 @@ const ProductListPage = () => {
         } else {
           setData([...data, ...responseData.data])
         }
-        setTotalPage(responseData.totalCount)
+        setTotalPage(responseData.totalCount || 0)
+        setError(null)
+      } else {
+        setData([])
+        setError(responseData.message || 'Failed to fetch products')
       }
     } catch (error) {
-      AxiosToastError(error)
+      console.error('ProductList fetch error:', error)
+      setData([])
+      setError('Server error. Please try refreshing or check connection.')
+      // Optional: AxiosToastError(error) - toast if needed
     } finally {
       setLoading(false)
     }

@@ -9,6 +9,7 @@ const ForgotPassword = () => {
     const [data, setData] = useState({
         email: "",
     })
+    const [loading, setLoading] = useState(false)
     const navigate = useNavigate()
 
     const handleChange = (e) => {
@@ -27,6 +28,7 @@ const ForgotPassword = () => {
 
     const handleSubmit = async(e)=>{
         e.preventDefault()
+        setLoading(true)
 
         try {
             const response = await Axios({
@@ -51,58 +53,66 @@ const ForgotPassword = () => {
 
         } catch (error) {
             AxiosToastError(error)
+        } finally {
+            setLoading(false)
         }
     }
 
     return (
-        <section className='relative overflow-hidden'>
-            <div className='absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-amber-50' />
-            <div className='absolute -top-24 -left-24 h-72 w-72 rounded-full bg-indigo-200/40 blur-3xl' />
-            <div className='absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-amber-200/50 blur-3xl' />
-
-            <div className='relative container mx-auto px-4 py-10'>
-                <div className='mx-auto w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8'>
-                    <div>
-                        <p className='text-sm font-semibold text-indigo-700'>Account recovery</p>
-                        <h2 className='mt-2 text-2xl font-bold tracking-tight text-slate-900'>Forgot your password?</h2>
-                        <p className='mt-1 text-sm text-slate-600'>
-                            Enter your email and we&apos;ll send an OTP to reset your password.
-                        </p>
+        <section className="min-h-screen flex items-center justify-center bg-[#f1f3f6] py-8">
+            <div className="w-full max-w-md">
+                {/* Main Card */}
+                <div className="bg-white rounded-lg shadow-lg p-8">
+                    {/* Logo Area */}
+                    <div className="text-center mb-6">
+                        <h1 className="text-3xl font-bold text-[#2874f0] italic">SoleVibe</h1>
+                        <p className="text-gray-600 mt-1 text-sm">Forgot your password?</p>
                     </div>
 
-                    <form className='mt-6 grid gap-4' onSubmit={handleSubmit}>
-                        <div className='grid gap-1.5'>
-                            <label htmlFor='email' className='text-sm font-semibold text-slate-700'>Email</label>
+                    {/* Form */}
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Email */}
+                        <div>
+                            <label className="text-sm font-medium text-gray-700 block mb-1">Enter your email address</label>
                             <input
                                 type='email'
-                                id='email'
                                 name='email'
                                 value={data.email}
                                 onChange={handleChange}
                                 autoComplete='email'
-                                placeholder='you@company.com'
-                                className='h-11 w-full rounded-xl border border-slate-300 bg-white px-4 text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100'
+                                placeholder='Enter your email'
+                                className='w-full px-4 py-3 rounded border border-gray-300 focus:border-[#2874f0] focus:ring-1 focus:ring-[#2874f0] outline-none text-gray-800'
                             />
+                            <p className="text-xs text-gray-500 mt-2">We'll send you an OTP to reset your password</p>
                         </div>
 
+                        {/* Submit Button */}
                         <button
-                            disabled={!valideValue}
-                            className={`h-11 w-full rounded-xl font-semibold text-white shadow-sm transition ${
-                                valideValue
-                                    ? "bg-gradient-to-r from-indigo-600 to-amber-500 hover:from-indigo-700 hover:to-amber-600"
-                                    : "bg-slate-300 text-slate-600 cursor-not-allowed"
+                            disabled={!valideValue || loading}
+                            className={`w-full py-3 rounded font-medium text-white transition ${
+                                valideValue && !loading
+                                    ? "bg-[#fb641b] hover:bg-[#e55a17]"
+                                    : "bg-[#fb641b] opacity-50 cursor-not-allowed"
                             }`}
                         >
-                            Send OTP
+                            {loading ? 'Sending OTP...' : 'Continue'}
                         </button>
                     </form>
 
-                    <p className='mt-6 text-sm text-slate-600'>
-                        Remembered your password?{" "}
-                        <Link to={"/login"} className='font-semibold text-indigo-600 hover:text-indigo-700'>
-                            Back to sign in
+                    {/* Back to Login */}
+                    <p className="text-center mt-6 text-gray-600 text-sm">
+                        Remember your password?{" "}
+                        <Link to={"/login"} className='font-medium text-[#2874f0] hover:underline'>
+                            Sign in
                         </Link>
                     </p>
+                </div>
+
+                {/* Business Info */}
+                <div className="text-center mt-4">
+                    <Link to={"/register"} className="text-xs text-[#2874f0] hover:underline">
+                        New to SoleVibe? Create an account
+                    </Link>
                 </div>
             </div>
         </section>
@@ -110,3 +120,4 @@ const ForgotPassword = () => {
 }
 
 export default ForgotPassword
+

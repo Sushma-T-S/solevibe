@@ -1,23 +1,29 @@
+
 import React from 'react'
 import UserMenu from '../components/UserMenu'
-import { Outlet } from 'react-router-dom'
+import UserMenuMinimal from '../components/UserMenuMinimal'
+import { Outlet, useLocation } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
 const Dashboard = () => {
   const user = useSelector(state => state.user)
+  const location = useLocation()
+  const pathname = location.pathname
+  const showFullMenu = pathname === '/dashboard' || pathname === '/dashboard/profile'
 
-  console.log("user dashboard",user)
   return (
-    <section className='bg-admin-bg min-h-screen'>
-        <div className='container mx-auto p-3 grid lg:grid-cols-[280px,1fr]'>
-                {/**left for menu */}
-                <div className='py-4 sticky top-24 max-h-[calc(100vh-96px)] overflow-y-auto lg:block border-r bg-admin-sidebar shadow-lg text-white p-2 dashboard-sidebar'>
-                  <UserMenu/>
+    <section className='bg-slate-50 min-h-screen'>
+  <div className='container mx-auto p-4 grid lg:grid-cols-[260px,1fr] lg:gap-4 gap-0 w-full'>
+
+                {/**left for menu - sidebar on left edge */}
+<div className='py-4 hidden lg:block sticky top-20 h-fit'>
+                  {/* User sidebar menu removed */}
                 </div>
 
 
                 {/**right for content */}
-                <div className='bg-admin-bg min-h-[75vh] dashboard-content p-4'>
+                <div className='bg-slate-50 min-h-screen p-0 lg:p-0 w-full'>
+
                   <Outlet/>
                 </div>
         </div>
@@ -26,3 +32,4 @@ const Dashboard = () => {
 }
 
 export default Dashboard
+

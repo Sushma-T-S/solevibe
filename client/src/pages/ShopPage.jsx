@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import FilterSidebar from '../components/FilterSidebar'
 import CardLoading from '../components/CardLoading'
 import SummaryApi from '../common/SummaryApi'
@@ -6,13 +6,107 @@ import Axios from '../utils/Axios'
 import AxiosToastError from '../utils/AxiosToastError'
 import CardProduct from '../components/CardProduct'
 import noDataImage from '../assets/nothing here yet.webp'
+import { useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 
 const ShopPage = () => {
     const [data, setData] = useState([])
+    const [allProducts, setAllProducts] = useState([])
     const [loading, setLoading] = useState(true)
     const loadingArrayCard = new Array(10).fill(null)
     const [selectedFilters, setSelectedFilters] = useState({})
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false)
+    const [searchParams] = useSearchParams()
+
+    const categoryData = useSelector(state => state.product.allCategory)
+    const subCategoryData = useSelector(state => state.product.allSubCategory)
+
+    // Fetch all products once to get all available colors
+    const fetchAllProducts = async () => {
+        try {
+            const response = await Axios({
+                ...SummaryApi.getProduct,
+                data: {
+                    page: 1,
+                    limit: 1000 // Get all products for color extraction
+                }
+            })
+            const { data: responseData } = response
+            if (responseData.success) {
+                setAllProducts(responseData.data)
+            }
+        } catch (error) {
+            console.log("Error fetching all products:", error)
+        }
+    }
+
+    // Parse URL parameters and set initial filters
+    useEffect(() => {
+        const categoryParam = searchParams.get('category')
+        const subCategoryParam = searchParams.get('subcategory')
+        
+        if (categoryData.length > 0 && subCategoryData.length > 0) {
+            const newFilters = {}
+
+            // Handle "kids" category specially - map to both Boys and Girls (Myntra style)
+            if (categoryParam?.toLowerCase() === 'kids') {
+                const boysCategory = categoryData.find(cat => 
+                    cat.name.toLowerCase() === 'boys'
+                )
+                const girlsCategory = categoryData.find(cat => 
+                    cat.name.toLowerCase() === 'girls'
+                )
+                
+                // Get category IDs for both boys and girls
+                const categoryIds = []
+                if (boysCategory) categoryIds.push(boysCategory._id)
+                if (girlsCategory) categoryIds.push(girlsCategory._id)
+                
+                if (categoryIds.length > 0) {
+                    newFilters.categories = categoryIds
+                }
+            } else {
+                // Find the category by name (for mens, womens, boys, girls)
+                const category = categoryData.find(cat => 
+                    cat.name.toLowerCase() === categoryParam?.toLowerCase()
+                )
+                
+                if (category) {
+                    newFilters.categories = [category._id]
+                }
+            }
+
+            if (subCategoryParam) {
+                newFilters.subCategories = [subCategoryParam]
+            }
+
+            // Only update if we have filters from URL
+            if (Object.keys(newFilters).length > 0) {
+                setSelectedFilters(newFilters)
+            }
+        }
+    }, [categoryData, subCategoryData, searchParams])
+
+    // Set default category to Mens when no filters and no URL params
+    useEffect(() => {
+        const categoryParam = searchParams.get('category')
+        const subCategoryParam = searchParams.get('subcategory')
+        
+        // Only set default if no URL params and no filters already set
+        if (!categoryParam && !subCategoryParam && categoryData.length > 0 && Object.keys(selectedFilters).length === 0) {
+            const mensCategory = categoryData.find(cat => cat.name.toLowerCase() === 'mens')
+            if (mensCategory) {
+                setSelectedFilters({
+                    categories: [mensCategory._id]
+                })
+            }
+        }
+    }, [categoryData, searchParams, selectedFilters])
+
+    // Fetch all products once on mount
+    useEffect(() => {
+        fetchAllProducts()
+    }, [])
 
     const fetchProducts = async () => {
         try {
@@ -44,6 +138,25 @@ const ShopPage = () => {
 
     const handleFilterChange = (filters) => {
         setSelectedFilters(filters)
+        
+        // Update URL params without page reload
+        const params = new URLSearchParams()
+        if (filters.categories?.length) {
+            const category = categoryData.find(c => c._id === filters.categories[0])
+            if (category) {
+                params.set('category', category.name.toLowerCase())
+            }
+        }
+        if (filters.subCategories?.length) {
+            params.set('subcategory', filters.subCategories[0])
+        }
+        
+        // Only update URL if there are filters
+        if (params.toString()) {
+            window.history.pushState({}, '', `/shop?${params.toString()}`)
+        } else {
+            window.history.pushState({}, '', '/shop')
+        }
     }
 
     const toggleMobileFilter = () => {
@@ -52,6 +165,22 @@ const ShopPage = () => {
 
     const closeMobileFilter = () => {
         setIsMobileFilterOpen(false)
+    }
+
+    // Get current page title based on filters
+    const getPageTitle = () => {
+        const categoryParam = searchParams.get('category')
+        const subCategoryParam = searchParams.get('subcategory')
+        
+        if (categoryParam) {
+            const category = categoryData.find(c => c.name.toLowerCase() === categoryParam.toLowerCase())
+            if (subCategoryParam) {
+                const subCategory = subCategoryData.find(s => s._id === subCategoryParam)
+                return `${subCategory?.name || ''} ${category?.name || ''}`.trim()
+            }
+            return category?.name || 'Shop'
+        }
+        return 'Shop'
     }
 
     return (
@@ -81,7 +210,7 @@ const ShopPage = () => {
                         <FilterSidebar 
                             onFilterChange={handleFilterChange}
                             selectedFilters={selectedFilters}
-                            products={data}
+                            products={allProducts}
                             isMobileOpen={isMobileFilterOpen}
                             onCloseMobile={closeMobileFilter}
                         />
@@ -92,7 +221,7 @@ const ShopPage = () => {
                 <div className='flex-1'>
                     <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4'>
                         <div className='mb-4'>
-                            <h1 className='text-2xl font-semibold text-gray-800'>Shop</h1>
+                            <h1 className='text-2xl font-semibold text-gray-800 capitalize'>{getPageTitle()}</h1>
                             <p className='text-gray-500'>{data.length} Products</p>
                         </div>
 
@@ -138,3 +267,4 @@ const ShopPage = () => {
 }
 
 export default ShopPage
+

@@ -1,4 +1,6 @@
-export const baseURL = import.meta.env.VITE_API_URL
+// Use proxy by default (empty string uses Vite's proxy)
+// Set VITE_API_URL=http://localhost:5001 for production or direct connection
+export const baseURL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL : ''
 
 const SummaryApi = {
     register : {
@@ -101,6 +103,10 @@ const SummaryApi = {
         url : '/api/product/get-product-details',
         method : 'post'
     },
+    getRelatedProducts : {
+        url : '/api/product/get-related-products',
+        method : 'post'
+    },
     updateProductDetails : {
         url : "/api/product/update-product-details",
         method : 'put'
@@ -156,6 +162,14 @@ const SummaryApi = {
     getOrderItems : {
         url : '/api/order/order-list',
         method : 'get'
+    },
+    razorpayOrder : {
+        url : '/api/order/razorpay-order',
+        method : 'post'
+    },
+    verifyPayment : {
+        url : '/api/order/verify-payment',
+        method : 'post'
     },
     addBrand : {
         url : '/api/brand/add-brand',
@@ -214,6 +228,15 @@ const SummaryApi = {
     adminLowStockProducts : {
         url : '/api/admin/products/low-stock',
         method : 'get'
+    },
+    // Product Reviews
+    addProductReview : {
+        url : '/api/product/add-review',
+        method : 'post'
+    },
+    getProductReviews : {
+        url : '/api/product/product-reviews',
+        method : 'post'
     }
 }
 

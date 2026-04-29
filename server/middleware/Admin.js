@@ -2,6 +2,7 @@ import UserModel from "../models/user.model.js"
 
 export const admin = async(request,response,next)=>{
     try {
+        console.log(`=== ADMIN DEBUG [${request.originalUrl}] userId: ${request.userId || 'none'} ===`)
        const  userId = request.userId
 
        if(!userId){
@@ -33,7 +34,10 @@ export const admin = async(request,response,next)=>{
        next()
 
     } catch (error) {
-        console.error("Admin middleware error:", error)
+        console.error(`=== ADMIN ERROR [${request.originalUrl}] userId: ${userId || 'none'} ===`)
+        console.error('Full error:', error)
+        console.error('Error stack:', error.stack)
+        console.error('=== END ADMIN ERROR ===')
         return response.status(500).json({
             message : "Permission denial - " + error.message,
             error : true,

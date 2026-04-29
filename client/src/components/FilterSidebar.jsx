@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react'
-import { useSelector } from 'react-redux'
-import Axios from '../utils/Axios'
-import SummaryApi from '../common/SummaryApi'
+import React, { useState, useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import Axios from '../utils/Axios';
+import SummaryApi from '../common/SummaryApi';
 
 const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobileOpen, onCloseMobile }) => {
     const [isCategoryOpen, setIsCategoryOpen] = useState(true)
@@ -11,8 +11,22 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
     const [isPriceOpen, setIsPriceOpen] = useState(true)
     const [allBrands, setAllBrands] = useState([])
 
+    // State for selected category (default: Mens)
+    const [selectedCategory, setSelectedCategory] = useState('Mens')
+
     const categoryData = useSelector(state => state.product.allCategory)
     const subCategoryData = useSelector(state => state.product.allSubCategory)
+    const loadingSubCategory = useSelector(state => state.product.loadingSubCategory)
+
+    // Find the Mens category by default and set it
+    useEffect(() => {
+        if (categoryData.length > 0 && !selectedFilters.categories?.length) {
+            const mensCategory = categoryData.find(cat => cat.name.toLowerCase() === 'mens')
+            if (mensCategory) {
+                handleCategorySelect(mensCategory)
+            }
+        }
+    }, [categoryData])
 
     // Fetch brands from API
     useEffect(() => {
@@ -32,10 +46,52 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
         fetchBrands()
     }, [])
 
-    // Extract dynamic colors from products
+    // Filter subcategories based on selected category
+    const filteredSubCategories = useMemo(() => {
+        if (!selectedCategory || !subCategoryData.length) return []
+        
+        // Handle Kids category - combine Boys and Girls subcategories (Myntra style)
+        if (selectedCategory.toLowerCase() === 'kids') {
+            const boysCategory = categoryData.find(cat => cat.name.toLowerCase() === 'boys')
+            const girlsCategory = categoryData.find(cat => cat.name.toLowerCase() === 'girls')
+            
+            return subCategoryData.filter(subCat => {
+                const categoryIds = subCat.category?.map(c => {
+                    if (typeof c === 'object' && c._id) return c._id.toString()
+                    return c.toString()
+                }) || []
+                
+                return categoryIds.includes(boysCategory?._id?.toString()) || 
+                       categoryIds.includes(girlsCategory?._id?.toString())
+            })
+        }
+        
+        const selectedCat = categoryData.find(cat => cat.name.toLowerCase() === selectedCategory.toLowerCase())
+        if (!selectedCat) return subCategoryData
+
+        return subCategoryData.filter(subCat => {
+            // Check if subCategory's category array includes the selected category's _id
+            const categoryIds = subCat.category?.map(c => {
+                if (typeof c === 'object' && c._id) return c._id.toString()
+                return c.toString()
+            }) || []
+            return categoryIds.includes(selectedCat._id.toString())
+        })
+    }, [subCategoryData, categoryData, selectedCategory])
+
+    // Extract dynamic colors from products - from variants.color
     const availableColors = useMemo(() => {
         const colors = new Set()
         products.forEach(product => {
+            // Check variants array for colors
+            if (product?.variants && product.variants.length > 0) {
+                product.variants.forEach(variant => {
+                    if (variant.color) {
+                        colors.add(variant.color)
+                    }
+                })
+            }
+            // Also check more_details.color for backward compatibility
             if (product?.more_details?.color) {
                 colors.add(product.more_details.color)
             }
@@ -43,18 +99,50 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
         return Array.from(colors).sort()
     }, [products])
 
-    // Handle category changes
-    const handleCategoryChange = (categoryId) => {
-        const currentFilters = { ...selectedFilters }
-        const currentCategories = currentFilters.categories || []
+    // Get brand names from brands API for display
+    const brandMap = useMemo(() => {
+        const map = {}
+        allBrands.forEach(brand => {
+            map[brand._id] = brand.name
+        })
+        return map
+    }, [allBrands])
+
+    // Extract brand IDs from products
+    const availableBrandIds = useMemo(() => {
+        const brandIds = new Set()
+        products.forEach(product => {
+            if (product?.brand) {
+                if (typeof product.brand === 'object' && product.brand._id) {
+                    brandIds.add(product.brand._id)
+                } else if (typeof product.brand === 'string') {
+                    brandIds.add(product.brand)
+                }
+            }
+        })
+        return Array.from(brandIds)
+    }, [products])
+
+    // Handle category toggle button click
+    const handleCategorySelect = (category) => {
+        setSelectedCategory(category.name)
         
-        if (currentCategories.includes(categoryId)) {
-            currentFilters.categories = currentCategories.filter(c => c !== categoryId)
-        } else {
-            currentFilters.categories = [...currentCategories, categoryId]
-        }
+        // Update filters with the selected category
+        const currentFilters = { ...selectedFilters }
+        currentFilters.categories = [category._id]
+        
+        // Clear subcategories when changing category
+        currentFilters.subCategories = []
         
         onFilterChange(currentFilters)
+    }
+
+    // Handle category tab click (for toggle buttons)
+    const handleCategoryTabClick = (categoryName) => {
+        const category = categoryData.find(cat => cat.name.toLowerCase() === categoryName.toLowerCase())
+        if (category) {
+            handleCategorySelect(category)
+        }
     }
 
     // Handle subCategory changes
@@ -138,13 +226,13 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                     <div className='flex items-center justify-between'>
                         <h2 className='text-lg font-bold text-white flex items-center gap-2'>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 0 1 1 1v2.586a1 1 0 0 1-.293 .707l-6.414 6.414a1 1 0 0 0-.293 .707V17l4 4v-6.586a1 1 0 0 0-.293-.707L3 7.293A1 1 0 0 1 3 6.586V4z" />
                             </svg>
                             Filters
                         </h2>
                         <button 
                             onClick={onCloseMobile}
-                            className='lg:hidden text-white hover:bg-white/20 p-1 rounded'
+                            className='lg:hidden text-white hover:bg-white/20 p-1 rounded-full'
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -153,7 +241,10 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                     </div>
                     {getSelectedCount() > 0 && (
                         <button 
-                            onClick={() => onFilterChange({})}
+                            onClick={() => {
+                                onFilterChange({})
+                                setSelectedCategory('Mens')
+                            }}
                             className='text-sm text-white bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full font-medium transition-colors mt-2'
                         >
                             Clear All ({getSelectedCount()})
@@ -162,44 +253,37 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                 </div>
 
                 <div className='p-3 space-y-1'>
-                    {/* Category Filter */}
+                    {/* Category List - Show one below another */}
                     <div className='border-b border-gray-100 pb-3'>
                         <button 
-                            onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                             className='flex items-center justify-between w-full text-left font-semibold text-gray-800 hover:text-orange-600 transition-colors'
+                            onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                         >
                             <span className='flex items-center gap-2'>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                 </svg>
                                 Category
-                                {selectedFilters.categories?.length > 0 && (
-                                    <span className='bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full'>
-                                        {selectedFilters.categories.length}
-                                    </span>
-                                )}
                             </span>
                             <span className='text-gray-400'>{isCategoryOpen ? '−' : '+'}</span>
                         </button>
                         
                         {isCategoryOpen && (
-                            <div className='mt-3 space-y-2 ml-6 max-h-48 overflow-y-auto'>
+                            <div className='mt-3 space-y-1'>
                                 {categoryData.length > 0 ? categoryData.map(cat => (
-                                    <label key={cat._id} className='flex items-center gap-3 cursor-pointer group'>
-                                        <div className='relative'>
-                                            <input 
-                                                type='checkbox'
-                                                checked={selectedFilters.categories?.includes(cat._id) || false}
-                                                onChange={() => handleCategoryChange(cat._id)}
-                                                className='sr-only peer'
-                                            />
-                                            <div className='w-5 h-5 border-2 border-gray-300 rounded peer-checked:border-orange-500 peer-checked:bg-orange-500 transition-all'></div>
-                                            <svg className='absolute top-0.5 left-0.5 w-4 h-4 text-white opacity-0 peer-checked:opacity-100' fill='currentColor' viewBox='0 0 20 20'>
-                                                <path fillRule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clipRule='evenodd' />
-                                            </svg>
-                                        </div>
-                                        <span className='text-gray-600 group-hover:text-gray-900 font-medium capitalize'>{cat.name}</span>
-                                    </label>
+                                    <button
+                                        key={cat._id}
+                                        onClick={() => handleCategoryTabClick(cat.name)}
+                                        className={`
+                                            w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200
+                                            ${selectedCategory?.toLowerCase() === cat.name.toLowerCase()
+                                                ? 'bg-orange-500 text-white shadow-md'
+                                                : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                                            }
+                                        `}
+                                    >
+                                        {cat.name}
+                                    </button>
                                 )) : (
                                     <p className='text-gray-400 text-sm italic'>No categories found</p>
                                 )}
@@ -207,7 +291,7 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                         )}
                     </div>
 
-                    {/* SubCategory Filter */}
+                    {/* SubCategory Filter - Shows based on selected category */}
                     <div className='border-b border-gray-100 pb-3'>
                         <button 
                             onClick={() => setIsSubCategoryOpen(!isSubCategoryOpen)}
@@ -218,6 +302,7 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                 </svg>
                                 Sub Category
+                                <span className='text-xs text-gray-400 font-normal'>({selectedCategory})</span>
                                 {selectedFilters.subCategories?.length > 0 && (
                                     <span className='bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full'>
                                         {selectedFilters.subCategories.length}
@@ -229,7 +314,12 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                         
                         {isSubCategoryOpen && (
                             <div className='mt-3 space-y-2 ml-6 max-h-48 overflow-y-auto'>
-                                {subCategoryData.length > 0 ? subCategoryData.map(subCat => (
+                                {loadingSubCategory ? (
+                                    <div className='flex items-center gap-2 text-gray-500 py-4'>
+                                        <div className='w-5 h-5 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin'></div>
+                                        <span className='text-sm'>Loading subcategories...</span>
+                                    </div>
+                                ) : filteredSubCategories.length > 0 ? filteredSubCategories.map(subCat => (
                                     <label key={subCat._id} className='flex items-center gap-3 cursor-pointer group'>
                                         <div className='relative'>
                                             <input 
@@ -240,13 +330,13 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                                             />
                                             <div className='w-5 h-5 border-2 border-gray-300 rounded peer-checked:border-orange-500 peer-checked:bg-orange-500 transition-all'></div>
                                             <svg className='absolute top-0.5 left-0.5 w-4 h-4 text-white opacity-0 peer-checked:opacity-100' fill='currentColor' viewBox='0 0 20 20'>
-                                                <path fillRule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clipRule='evenodd' />
+                                                <path fillRule='evenodd' d='M16.707 5.293a1 1 0 0 1 0 1.414l-8 8a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 1.414-1.414L8 12.586l7.293-7.293a1 1 0 0 1 1.414 0z' clipRule='evenodd' />
                                             </svg>
                                         </div>
                                         <span className='text-gray-600 group-hover:text-gray-900 font-medium capitalize'>{subCat.name}</span>
                                     </label>
                                 )) : (
-                                    <p className='text-gray-400 text-sm italic'>No subcategories found</p>
+                                    <p className='text-gray-400 text-sm italic'>No subcategories for {selectedCategory}</p>
                                 )}
                             </div>
                         )}
@@ -260,7 +350,7 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                         >
                             <span className='flex items-center gap-2'>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024 .195 1.414 .586l7 7a2 2 0 0 1 0 2.828l-7 7a2 2 0 0 1-2.828 0l-7-7A1.994 1.994 0 0 1 3 12V7a4 4 0 0 1 4-4z" />
                                 </svg>
                                 Brand
                                 {selectedFilters.brands?.length > 0 && (
@@ -285,7 +375,7 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                                             />
                                             <div className='w-5 h-5 border-2 border-gray-300 rounded peer-checked:border-orange-500 peer-checked:bg-orange-500 transition-all'></div>
                                             <svg className='absolute top-0.5 left-0.5 w-4 h-4 text-white opacity-0 peer-checked:opacity-100' fill='currentColor' viewBox='0 0 20 20'>
-                                                <path fillRule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clipRule='evenodd' />
+                                                <path fillRule='evenodd' d='M16.707 5.293a1 1 0 0 1 0 1.414l-8 8a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 1.414-1.414L8 12.586l7.293-7.293a1 1 0 0 1 1.414 0z' clipRule='evenodd' />
                                             </svg>
                                         </div>
                                         <span className='text-gray-600 group-hover:text-gray-900 font-medium'>{brand.name}</span>
@@ -297,7 +387,7 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                         )}
                     </div>
 
-                    {/* Color Filter */}
+                    {/* Color Filter - Shows colors from products */}
                     <div className='border-b border-gray-100 pb-3'>
                         <button 
                             onClick={() => setIsColorOpen(!isColorOpen)}
@@ -305,7 +395,7 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                         >
                             <span className='flex items-center gap-2'>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 0 1-4-4V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12a4 4 0 0 1-4 4zm0 0h12a2 2 0 0 0 2-2v-4a2 2 0 0 0 0-2h-2.343M11 7.343l1.657-1.657a2 2 0 0 1 2.828 0l2.829 2.829a2 2 0 0 1 0 2.828l-8.486 8.485M7 17h.01" />
                                 </svg>
                                 Color
                                 {selectedFilters.colors?.length > 0 && (
@@ -318,32 +408,30 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                         </button>
                         
                         {isColorOpen && (
-                            <div className='mt-3 ml-6'>
-                                <div className='flex flex-wrap gap-2'>
-                                    {availableColors.length > 0 ? availableColors.map(color => (
-                                        <label key={color} className='flex items-center gap-2 cursor-pointer group' title={color}>
-                                            <div className='relative'>
-                                                <input 
-                                                    type='checkbox'
-                                                    checked={selectedFilters.colors?.includes(color) || false}
-                                                    onChange={() => handleColorChange(color)}
-                                                    className='sr-only peer'
-                                                />
-                                                <div 
-                                                    className={`w-8 h-8 rounded-full border-2 transition-all ${selectedFilters.colors?.includes(color) ? 'border-orange-500 scale-110' : 'border-gray-300 hover:border-gray-400'}`}
-                                                    style={{ backgroundColor: color.toLowerCase() }}
-                                                ></div>
-                                                {selectedFilters.colors?.includes(color) && (
-                                                    <svg className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-white' fill='currentColor' viewBox='0 0 20 20'>
-                                                        <path fillRule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clipRule='evenodd' />
-                                                    </svg>
-                                                )}
-                                            </div>
-                                        </label>
-                                    )) : (
-                                        <p className='text-gray-400 text-sm italic'>No colors found</p>
-                                    )}
-                                </div>
+                            <div className='mt-3 ml-6 space-y-2'>
+                                {availableColors.length > 0 ? availableColors.map(color => (
+                                    <label key={color} className='flex items-center gap-3 cursor-pointer group'>
+                                        <div className='relative'>
+                                            <input 
+                                                type='checkbox'
+                                                checked={selectedFilters.colors?.includes(color) || false}
+                                                onChange={() => handleColorChange(color)}
+                                                className='sr-only peer'
+                                            />
+                                            <div className='w-5 h-5 border-2 border-gray-300 rounded peer-checked:border-orange-500 peer-checked:bg-orange-500 transition-all'></div>
+                                            <svg className='absolute top-0.5 left-0.5 w-4 h-4 text-white opacity-0 peer-checked:opacity-100' fill='currentColor' viewBox='0 0 20 20'>
+                                                <path fillRule='evenodd' d='M16.707 5.293a1 1 0 0 1 0 1.414l-8 8a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 1.414-1.414L8 12.586l7.293-7.293a1 1 0 0 1 1.414 0z' clipRule='evenodd' />
+                                            </svg>
+                                        </div>
+                                        <div 
+                                            className='w-5 h-5 rounded-full border border-gray-300'
+                                            style={{ backgroundColor: color.toLowerCase() }}
+                                        ></div>
+                                        <span className='text-gray-600 group-hover:text-gray-900 font-medium capitalize'>{color}</span>
+                                    </label>
+                                )) : (
+                                    <p className='text-gray-400 text-sm italic'>No colors found</p>
+                                )}
                             </div>
                         )}
                     </div>
@@ -356,7 +444,7 @@ const FilterSidebar = ({ onFilterChange, selectedFilters, products = [], isMobil
                         >
                             <span className='flex items-center gap-2'>
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0 0c1.11 0 2.08 .402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 Price
                             </span>

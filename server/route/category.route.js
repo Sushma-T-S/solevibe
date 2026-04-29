@@ -4,6 +4,18 @@ import { AddCategoryController, deleteCategoryController, getCategoryController,
 
 const categoryRouter = Router()
 
+/**
+ * @swagger
+ * /api/category/add-category:
+ *   post:
+ *     summary: Add category
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       201:
+ *         description: Category created
+ */
 categoryRouter.post("/add-category",auth,AddCategoryController)
 categoryRouter.get('/get',getCategoryController)
 categoryRouter.put('/update',auth,updateCategoryController)
